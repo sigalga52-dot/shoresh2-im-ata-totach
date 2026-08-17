@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מי האלוף בשורשים? – משחק</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html[dir="rtl"] { direction: rtl; unicode-bidi: embed; }
+
+        body {
+            font-family: 'Heebo', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(102,126,234,0.4) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(118,75,162,0.4) 0%, transparent 50%);
+            animation: bgFloat 6s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+        @keyframes bgFloat {
+            0%,100% { transform: translate(0,0); }
+            50%      { transform: translate(20px,-20px); }
+        }
+
+        /* √ ברקע */
+        .sqrt-bg {
+            font-family: 'Georgia', serif;
+            color: rgba(255,255,255,0.08);
+            position: fixed;
+            pointer-events: none;
+            z-index: 0;
+            animation: floatSym 9s ease-in-out infinite;
+        }
+        .sqrt-bg-1 { font-size: 9rem;  top: 3%;   left: 2%;   animation-delay: 0s; }
+        .sqrt-bg-2 { font-size: 11rem; bottom: 5%; right: 4%;  animation-delay: 3s; }
+        @keyframes floatSym {
+            0%,100% { transform: translateY(0); }
+            50%      { transform: translateY(-18px); }
+        }
+
+        /* ====== כרטיסיית המשחק ====== */
+        .card {
+            position: relative;
+            z-index: 1;
+            background: rgba(255,255,255,0.97);
+            border-radius: 24px;
+            padding: 2.5rem 2rem;
+            max-width: 520px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+            animation: slideUp 0.6s ease-out;
+        }
+        @keyframes slideUp {
+            from { opacity:0; transform:translateY(24px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+
+        /* ====== Header ====== */
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.8rem;
+        }
+        .score-box {
+            background: linear-gradient(135deg,#667eea,#764ba2);
+            color: white;
+            border-radius: 12px;
+            padding: 0.4rem 1rem;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        .progress-text {
+            color: #888;
+            font-size: 0.95rem;
+        }
+        .timer-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 12px;
+            padding: 0.4rem 1rem;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #856404;
+            min-width: 4rem;
+            text-align: center;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .timer-box.urgent {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #842029;
+            animation: timerShake 0.4s ease-in-out infinite;
+        }
+        @keyframes timerShake {
+            0%,100% { transform: translateX(0); }
+            25%      { transform: translateX(-3px); }
+            75%      { transform: translateX(3px); }
+        }
+
+        /* ====== Progress bar ====== */
+        .progress-bar-wrap {
+            background: #e9ecef;
+            border-radius: 99px;
+            height: 8px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg,#667eea,#764ba2);
+            border-radius: 99px;
+            transition: width 0.4s ease;
+        }
+
+        /* ====== שאלה ====== */
+        .question-label {
+            font-size: 0.85rem;
+            color: #888;
+            text-align: center;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .question-box {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        /* הצגת √N */
+        .sqrt-display {
+            display: inline-flex;
+            align-items: flex-start;
+            justify-content: center;
+            color: #3a3a5c;
+            line-height: 1;
+        }
+        .sqrt-sign {
+            font-family: 'Georgia', serif;
+            font-size: 4.5rem;
+            font-weight: 400;
+            line-height: 0.85;
+            color: #667eea;
+        }
+        .sqrt-radicand-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .sqrt-overline {
+            width: 100%;
+            height: 3px;
+            background: #667eea;
+            border-radius: 2px;
+            margin-bottom: 2px;
+        }
+        .sqrt-number {
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: #3a3a5c;
+            line-height: 1;
+            padding: 0 0.3rem;
+        }
+
+        .question-equals {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #aaa;
+            margin: 0 0.6rem;
+            align-self: center;
+        }
+        .question-mark {
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: #764ba2;
+            align-self: center;
+        }
+
+        /* ====== תשובות ====== */
+        .answers-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.85rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .answer-btn {
+            padding: 1rem;
+            font-size: 1.4rem;
+            font-weight: 700;
+            font-family: 'Heebo', sans-serif;
+            color: #3a3a5c;
+            background: #f4f6ff;
+            border: 2px solid #e0e4f5;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .answer-btn:hover:not(:disabled) {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102,126,234,0.35);
+        }
+        .answer-btn.correct {
+            background: #d1fae5;
+            border-color: #10b981;
+            color: #065f46;
+            transform: scale(1.04);
+        }
+        .answer-btn.wrong {
+            background: #fee2e2;
+            border-color: #ef4444;
+            color: #991b1b;
+        }
+        .answer-btn.reveal-correct {
+            background: #d1fae5;
+            border-color: #10b981;
+            color: #065f46;
+        }
+        .answer-btn:disabled { cursor: not-allowed; }
+
+        /* ====== פידבק ====== */
+        .feedback {
+            text-align: center;
+            min-height: 2rem;
+            font-size: 1.05rem;
+            font-weight: 700;
+            border-radius: 10px;
+            padding: 0.5rem 1rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s;
+        }
+        .feedback.correct { background: #d1fae5; color: #065f46; }
+        .feedback.wrong   { background: #fee2e2; color: #991b1b; }
+        .feedback.empty   { opacity: 0; }
+
+        /* תוספת עבור עיצוב הוידאו במשוב חיובי */
+        .feedback video {
+            max-width: 100%;
+            max-height: 180px;
+            border-radius: 8px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* ====== מסך סיום ====== */
+        .result-screen {
+            text-align: center;
+            animation: slideUp 0.5s ease-out;
+        }
+        .result-sqrt {
+            font-family: 'Georgia', serif;
+            font-size: 5rem;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+        .result-title {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #3a3a5c;
+            margin-bottom: 0.5rem;
+        }
+        .result-score {
+            font-size: 3.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg,#667eea,#764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 0.8rem 0;
+        }
+        .result-msg {
+            font-size: 1.1rem;
+            color: #555;
+            margin-bottom: 2rem;
+        }
+        .result-stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        .stat-box {
+            background: #f4f6ff;
+            border-radius: 14px;
+            padding: 0.8rem 1.4rem;
+            text-align: center;
+        }
+        .stat-number { font-size: 1.8rem; font-weight: 900; color: #667eea; }
+        .stat-label  { font-size: 0.8rem; color: #888; margin-top: 0.2rem; }
+
+        .btn-primary {
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            font-family: 'Heebo', sans-serif;
+            color: white;
+            background: linear-gradient(135deg,#667eea,#764ba2);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 8px 24px rgba(102,126,234,0.4);
+            margin: 0 0.4rem;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(102,126,234,0.5); }
+
+        .btn-secondary {
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 500;
+            font-family: 'Heebo', sans-serif;
+            color: #667eea;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 0 0.4rem;
+        }
+        .btn-secondary:hover { background: #f4f6ff; }
+
+        @media (max-width: 480px) {
+            .card { padding: 1.8rem 1.2rem; }
+            .sqrt-sign { font-size: 3.2rem; }
+            .sqrt-number { font-size: 2.6rem; }
+            .question-mark { font-size: 2.6rem; }
+            .answer-btn { font-size: 1.2rem; padding: 0.85rem; }
+            .result-stats { gap: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <span class="sqrt-bg sqrt-bg-1">√</span>
+    <span class="sqrt-bg sqrt-bg-2">√</span>
+
+    <div class="card" id="gameCard">
+        <!-- תוכן נטען ע"י JS -->
+    </div>
+
+    <script>
+    // ===== בסיס שאלות =====
+    const ALL_QUESTIONS = [
+        { n: 4,   ans: 2  },
+        { n: 9,   ans: 3  },
+        { n: 16,  ans: 4  },
+        { n: 25,  ans: 5  },
+        { n: 36,  ans: 6  },
+        { n: 49,  ans: 7  },
+        { n: 64,  ans: 8  },
+        { n: 81,  ans: 9  },
+        { n: 100, ans: 10 },
+        { n: 121, ans: 11 },
+        { n: 144, ans: 12 },
+        { n: 169, ans: 13 },
+        { n: 196, ans: 14 },
+        { n: 225, ans: 15 },
+        { n: 256, ans: 16 },
+        { n: 289, ans: 17 },
+        { n: 324, ans: 18 },
+        { n: 361, ans: 19 },
+        { n: 400, ans: 20 },
+        { n: 1,   ans: 1  },
+    ];
+
+    const TOTAL_QUESTIONS = 10;
+    const SECONDS_PER_Q  = 15;
+
+    let questions    = [];
+    let current      = 0;
+    let score        = 0;
+    let correctCount = 0;
+    let timerInterval = null;
+    let timeLeft     = SECONDS_PER_Q;
+    let answered     = false;
+
+    // ===== עזרים =====
+    function shuffle(arr) {
+        const a = [...arr];
+        for (let i = a.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+    }
+
+    function buildOptions(correct) {
+        const pool = new Set([correct]);
+        const allAnswers = ALL_QUESTIONS.map(q => q.ans);
+        while (pool.size < 4) {
+            const candidate = allAnswers[Math.floor(Math.random() * allAnswers.length)];
+            pool.add(candidate);
+        }
+        return shuffle([...pool]);
+    }
+
+    // ===== אתחול =====
+    function initGame() {
+        questions = shuffle(ALL_QUESTIONS).slice(0, TOTAL_QUESTIONS);
+        current = 0;
+        score   = 0;
+        correctCount = 0;
+        renderQuestion();
+    }
+
+    // ===== טיימר =====
+    function startTimer() {
+        clearInterval(timerInterval);
+        timeLeft = SECONDS_PER_Q;
+        updateTimerDisplay();
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            updateTimerDisplay();
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                handleTimeout();
+            }
+        }, 1000);
+    }
+
+    function updateTimerDisplay() {
+        const el = document.getElementById('timer');
+        if (!el) return;
+        el.textContent = timeLeft + 'ש';
+        el.classList.toggle('urgent', timeLeft <= 5);
+    }
+
+    function handleTimeout() {
+        if (answered) return;
+        answered = true;
+        const q = questions[current];
+        showFeedback(false, q.ans);
+        revealButtons(q.ans);
+        setTimeout(nextQuestion, 1800);
+    }
+
+    // ===== רינדור שאלה =====
+    function renderQuestion() {
+        answered = false;
+        const q = questions[current];
+        const opts = buildOptions(q.ans);
+        const progress = ((current / TOTAL_QUESTIONS) * 100).toFixed(0);
+
+        document.getElementById('gameCard').innerHTML = `
+            <div class="game-header">
+                <div class="score-box">ניקוד: <span id="scoreVal">${score}</span></div>
+                <div class="progress-text">${current + 1} / ${TOTAL_QUESTIONS}</div>
+                <div class="timer-box" id="timer">${SECONDS_PER_Q}ש</div>
+            </div>
+
+            <div class="progress-bar-wrap">
+                <div class="progress-bar-fill" style="width:${progress}%"></div>
+            </div>
+
+            <p class="question-label">כמה שווה השורש?</p>
+
+            <div class="question-box">
+                <div class="sqrt-display" dir="ltr">
+                    <span class="sqrt-sign">√</span>
+                    <div class="sqrt-radicand-wrap">
+                        <div class="sqrt-overline"></div>
+                        <span class="sqrt-number">${q.n}</span>
+                    </div>
+                    <span class="question-equals">=</span>
+                    <span class="question-mark">?</span>
+                </div>
+            </div>
+
+            <div class="answers-grid" id="answersGrid">
+                ${opts.map(opt => `
+                    <button class="answer-btn" data-val="${opt}" onclick="handleAnswer(${opt}, ${q.ans})">
+                        ${opt}
+                    </button>
+                `).join('')}
+            </div>
+
+            <div class="feedback empty" id="feedback"></div>
+        `;
+
+        startTimer();
+    }
+
+    // ===== טיפול בתשובה =====
+    function handleAnswer(chosen, correct) {
+        if (answered) return;
+        answered = true;
+        clearInterval(timerInterval);
+
+        const isCorrect = chosen === correct;
+        if (isCorrect) {
+            const bonus = Math.max(0, timeLeft);
+            score += 10 + bonus;
+            correctCount++;
+        }
+
+        showFeedback(isCorrect, correct);
+        revealButtons(correct, chosen);
+
+        if (document.getElementById('scoreVal'))
+            document.getElementById('scoreVal').textContent = score;
+
+        // ניהול הזמן למעבר לשאלה הבאה בהתאם להצלחה או כישלון
+        if (isCorrect) {
+            const videoEl = document.getElementById('success-video');
+            if (videoEl) {
+                // עוברים לשאלה הבאה רק כשהסרטון מסתיים
+                videoEl.onended = () => nextQuestion();
+                // גיבוי למקרה שיש שגיאה כלשהי בטעינת הוידאו
+                videoEl.onerror = () => setTimeout(nextQuestion, 2000);
+            } else {
+                setTimeout(nextQuestion, 2000);
+            }
+        } else {
+            // אם הטעות, ממתינים 1.6 שניות (כמו קודם)
+            setTimeout(nextQuestion, 1600);
+        }
+    }
+
+    function showFeedback(isCorrect, correct) {
+        const el = document.getElementById('feedback');
+        if (!el) return;
+        if (isCorrect) {
+            // שתילת הוידאו כולל שינוי בסיומת הקישור ל-raw=1 על מנת שיתנגן ישירות
+            const videoUrl = "https://www.dropbox.com/scl/fi/gtk5h6utz0gdz5qk492a4/Video-Project-4.mp4?rlkey=f52g8gd9m6s8hvx50cbvi395o&st=vivp2f05&raw=1";
+            el.innerHTML = `<video id="success-video" src="${videoUrl}" autoplay playsinline></video>`;
+            el.className = 'feedback correct';
+        } else {
+            el.textContent = `לא נכון. התשובה הנכונה: ${correct}`;
+            el.className = 'feedback wrong';
+        }
+    }
+
+    function revealButtons(correct, chosen) {
+        document.querySelectorAll('.answer-btn').forEach(btn => {
+            btn.disabled = true;
+            const val = parseInt(btn.dataset.val);
+            if (val === correct) btn.classList.add('reveal-correct');
+            else if (chosen && val === chosen) btn.classList.add('wrong');
+        });
+    }
+
+    // ===== מעבר לשאלה הבאה / סיום =====
+    function nextQuestion() {
+        current++;
+        if (current < TOTAL_QUESTIONS) {
+            renderQuestion();
+        } else {
+            renderResult();
+        }
+    }
+
+    // ===== מסך תוצאה =====
+    function renderResult() {
+        clearInterval(timerInterval);
+        const pct = Math.round((correctCount / TOTAL_QUESTIONS) * 100);
+        let msg;
+        if (pct === 100) msg = 'מושלם! אתה אלוף השורשים הריבועיים! 🏆';
+        else if (pct >= 80) msg = 'כל הכבוד! יש לך ידע מצוין בשורשים! ⭐';
+        else if (pct >= 60) msg = 'טוב מאוד! עוד קצת תרגול ותגיע לפסגה!';
+        else if (pct >= 40) msg = 'לא רע! כדאי לתרגל עוד קצת שורשים ריבועיים.';
+        else msg = 'לא נורא – תתחיל מחדש ותשפר את הניקוד!';
+
+        document.getElementById('gameCard').innerHTML = `
+            <div class="result-screen">
+                <div class="result-sqrt">√</div>
+                <div class="result-title">סיום המשחק!</div>
+                <div class="result-score">${score} נקודות</div>
+                <div class="result-stats">
+                    <div class="stat-box">
+                        <div class="stat-number">${correctCount}/${TOTAL_QUESTIONS}</div>
+                        <div class="stat-label">תשובות נכונות</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">${pct}%</div>
+                        <div class="stat-label">אחוז הצלחה</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">${score}</div>
+                        <div class="stat-label">ניקוד סופי</div>
+                    </div>
+                </div>
+                <p class="result-msg">${msg}</p>
+                <div>
+                    <button class="btn-primary" onclick="initGame()">שחק שוב</button>
+                    <button class="btn-secondary" onclick="window.location.href='shorashim-hishoov.html'">דף הבית</button>
+                </div>
+            </div>
+        `;
+    }
+
+    // ===== התחלה =====
+    initGame();
+    </script>
+</body>
+</html>
